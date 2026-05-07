@@ -85,12 +85,12 @@ curl http://127.0.0.1:8000/health
 ### Premium Dark Theme Interface
 Here is a high-resolution preview of the interactive dashboard in the premium glassmorphic Dark Theme:
 
-![Telemetry Dashboard Preview](/Users/sampathm/github/agent_token_manager/dashboard_preview.png)
+![Telemetry Dashboard Preview](dashboard_preview.png)
 
 ### Interactive Theme Toggling (Demo)
 Below is an interactive visual demonstration showing a user clicking the `☀️ Light Mode` / `🌙 Dark Mode` toggle, with all cards and Chart.js trend lines dynamically redrawing themselves:
 
-![Interactive Theme Toggling Demo](/Users/sampathm/github/agent_token_manager/dashboard_demo.webp)
+![Interactive Theme Toggling Demo](dashboard_demo.webp)
 
 ---
 
