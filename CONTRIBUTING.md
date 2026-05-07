@@ -28,25 +28,39 @@ To maintain absolute baseline consistency, **no module should define local data 
 
 ## 🛠️ Local Development Setup
 
+We recommend using **`uv`** for instant, zero-configuration virtualenv and package management:
+
+### Option A: The Fast Way (Recommended)
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/sampathm/agent-atm.git
    cd agent-atm
    ```
+2. **Create and Sync Environment** (Installs all SDK and dev dependencies in a single command):
+   ```bash
+   uv sync
+   ```
+3. **Activate the Environment**:
+   ```bash
+   source .venv/bin/activate
+   ```
 
+---
+
+### Option B: The Classic Way
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/sampathm/agent-atm.git
+   cd agent-atm
+   ```
 2. **Setup Virtual Environment** (Python 3.13+ required):
    ```bash
    python -m venv .venv
    source .venv/bin/activate
    ```
-
-3. **Install Package in Editable Mode with Dependencies**:
+3. **Install Package in Editable Mode with Development Packages**:
    ```bash
-   pip install -e .
-   ```
-
-4. **Install Development Packages**:
-   ```bash
+   pip install -e ".[dev]"
    pip install pytest black mypy
    ```
 

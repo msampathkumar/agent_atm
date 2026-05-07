@@ -1,10 +1,6 @@
-from datetime import datetime
 import time
-import pytest
 import agent_atm as atm
-from agent_atm.context import TokenEvent
 from agent_atm.core import AgentTokenManager
-from agent_atm.limits import TokenQuotaExceeded
 
 # Simple mock class for a Google GenAI style response
 class MockGoogleGenAIResponse:
@@ -157,3 +153,24 @@ def test_fastapi_post_telemetry():
     
     assert response.status_code == 201
     assert response.json()["status"] == "success"
+
+def test_core_token_only_logging():
+    """Verify that content is optional and token-only logging works natively."""
+    atm_mgr = AgentTokenManager(data_manager="in_memory")
+    
+    # 1. Log request with only token_count
+    ev_req = atm_mgr.add_user_request(token_count=50, model_id="custom-model")
+    assert ev_req.token_count == 50
+    assert ev_req.model_id == "custom-model"
+    assert ev_req.event_type == "request"
+    
+    # 2. Log response with only token_count
+    ev_resp = atm_mgr.add_model_response(token_count=150)
+    assert ev_resp.token_count == 150
+    assert ev_resp.event_type == "response"
+    
+    # 3. Verify singleton wrapper works the same way
+    atm.init(data_manager="in_memory")
+    ev_global = atm.add_user_request(token_count=75)
+    assert ev_global.token_count == 75
+

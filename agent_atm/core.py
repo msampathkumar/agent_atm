@@ -98,7 +98,7 @@ class AgentTokenManager:
     def _process_event(
         self, 
         event_type: str, 
-        content: Any, 
+        content: Any = None, 
         token_count: Optional[int] = None,
         model_id: str = "default",
         username: Optional[str] = None,
@@ -186,7 +186,7 @@ class AgentTokenManager:
 
     def add_user_request(
         self, 
-        content: Any, 
+        content: Any = None, 
         token_count: Optional[int] = None,
         model_id: str = "default",
         username: Optional[str] = None,
@@ -201,7 +201,7 @@ class AgentTokenManager:
 
     def add_model_response(
         self, 
-        content: Any, 
+        content: Any = None, 
         token_count: Optional[int] = None,
         model_id: str = "default",
         username: Optional[str] = None,

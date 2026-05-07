@@ -1,4 +1,3 @@
-import time
 import agent_atm as atm
 from agent_atm.tokenizers.base import LLMPayload
 
@@ -24,7 +23,7 @@ def run_demo():
     @atm.hook("post")
     def slack_alert_post_hook(event):
         if event.token_count > 5000:
-            print(f"   [Post-hook] ALERT: Extremely large request detected!")
+            print("   [Post-hook] ALERT: Extremely large request detected!")
 
     print("Pre and Post hooks successfully registered.")
 

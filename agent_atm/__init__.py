@@ -1,6 +1,4 @@
 from typing import Any, List, Optional, Union
-import sys
-
 
 from agent_atm.context import TokenEvent, context
 from agent_atm.data_managers.base import BaseDataManager
@@ -44,7 +42,7 @@ def _get_manager() -> AgentTokenManager:
     return _global_manager
 
 def add_user_request(
-    content: Any, 
+    content: Any = None, 
     token_count: Optional[int] = None,
     model_id: str = "default",
     username: Optional[str] = None,
@@ -58,7 +56,7 @@ def add_user_request(
     )
 
 def add_model_response(
-    content: Any, 
+    content: Any = None, 
     token_count: Optional[int] = None,
     model_id: str = "default",
     username: Optional[str] = None,
