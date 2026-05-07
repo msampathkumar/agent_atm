@@ -1,0 +1,13 @@
+[project]
+name = "agent-atm"
+version = "0.1.0"
+description = "Agent Token Manager (agent-atm) - A lightweight, privacy-first LLM token usage metering & quota capping SDK."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "tiktoken>=0.7.0",
+    "gemma>=3.3.0"
+]
+
