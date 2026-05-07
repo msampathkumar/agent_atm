@@ -9,3 +9,5 @@ wheels/
 # Virtual environments
 .venv
 sam_*
+.db
+uv.lock
