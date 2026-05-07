@@ -8,6 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Project lock files and user cache files
 sam_*
-.db
+*.db
 uv.lock
