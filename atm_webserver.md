@@ -67,6 +67,31 @@ curl -X POST http://127.0.0.1:8000/api/events \
 {"status":"success","message":"Event successfully logged to backend telemetry store."}
 ```
 
+### 🩺 Test 3: Verify Webserver Health Status
+Run this command to perform a health check monitoring check:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+**Expected Response**:
+```json
+{"status":"healthy","database":"connected"}
+```
+
+---
+
+## 🖼️ Dashboard Interface Preview
+
+### Premium Dark Theme Interface
+Here is a high-resolution preview of the interactive dashboard in the premium glassmorphic Dark Theme:
+
+![Telemetry Dashboard Preview](/Users/sampathm/github/agent_token_manager/dashboard_preview.png)
+
+### Interactive Theme Toggling (Demo)
+Below is an interactive visual demonstration showing a user clicking the `☀️ Light Mode` / `🌙 Dark Mode` toggle, with all cards and Chart.js trend lines dynamically redrawing themselves:
+
+![Interactive Theme Toggling Demo](/Users/sampathm/github/agent_token_manager/dashboard_demo.webp)
+
 ---
 
 ## 📊 Live Observation

@@ -154,6 +154,15 @@ def test_fastapi_post_telemetry():
     assert response.status_code == 201
     assert response.json()["status"] == "success"
 
+def test_fastapi_health_check():
+    from fastapi.testclient import TestClient
+    from agent_atm.dashboard.server import app
+    
+    client = TestClient(app)
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy", "database": "connected"}
+
 def test_core_token_only_logging():
     """Verify that content is optional and token-only logging works natively."""
     atm_mgr = AgentTokenManager(data_manager="in_memory")

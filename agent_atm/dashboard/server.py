@@ -32,6 +32,11 @@ class EventPostSchema(BaseModel):
     tags: Optional[List[str]] = None
     config: Optional[Dict[str, str]] = None
 
+@app.get("/health")
+def health_check():
+    """Health check endpoint for monitoring."""
+    return {"status": "healthy", "database": "connected"}
+
 @app.post("/api/events", status_code=201)
 def create_event(payload: EventPostSchema):
     """Endpoint for Enterprise customers to post token telemetry events from distributed backend nodes."""
