@@ -8,8 +8,8 @@
     <!-- Premium Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     
-    <!-- Chart.js from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Stable Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     
     <!-- Standalone Premium Glassmorphism Stylesheet -->
     <link rel="stylesheet" href="/static/css/style.css">
@@ -20,13 +20,34 @@
             <h1>agent-atm</h1>
             <p>Real-time LLM Token usage metering & quota observability</p>
         </div>
-        <div style="display: flex; gap: 0.75rem;">
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <label for="time-window-select" style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Timeframe:</label>
+            <select id="time-window-select" class="btn-secondary" style="padding: 0.5rem 1rem; border-radius: 12px; cursor: pointer; font-weight: 600;" onchange="onWindowChange(this.value)">
+                <option value="1m">1 Month</option>
+                <option value="7d" selected>7 Days</option>
+                <option value="3d">3 Days</option>
+                <option value="1d">1 Day</option>
+                <option value="12h">12 Hours</option>
+                <option value="6h">6 Hours</option>
+                <option value="4h">4 Hours</option>
+                <option value="2h">2 Hours</option>
+                <option value="1h">1 Hour</option>
+                <option value="30m">30 Minutes</option>
+                <option value="15m">15 Minutes</option>
+                <option value="5m">5 Minutes</option>
+            </select>
+            
+            <label style="display: flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary); cursor: pointer; margin-left: 0.5rem; margin-right: 0.5rem;">
+                <input type="checkbox" id="auto-refresh-checkbox" checked onchange="toggleAutoRefresh(this.checked)" style="width: 16px; height: 16px; cursor: pointer; accent-color: #6366f1;">
+                Refresh Telemetry
+            </label>
+
             <button class="btn-secondary" onclick="toggleTheme()" id="theme-toggle-btn">☀️ Light Mode</button>
-            <button class="btn" onclick="loadData()">Refresh Telemetry</button>
+            <button class="btn" onclick="loadData()">Refresh Now</button>
         </div>
     </header>
 
-    <div class="stats-grid">
+    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
         <div class="stat-card">
             <div class="stat-label">Total Events</div>
             <div class="stat-value" id="stat-total-events">-</div>
@@ -39,7 +60,15 @@
             <div class="stat-label">Total Responses</div>
             <div class="stat-value" id="stat-total-responses">-</div>
         </div>
-        <div class="stat-card tokens">
+        <div class="stat-card" style="border-left: 4px solid #6366f1;">
+            <div class="stat-label">Request Tokens</div>
+            <div class="stat-value" id="stat-request-tokens">-</div>
+        </div>
+        <div class="stat-card responses" style="border-left: 4px solid #10b981;">
+            <div class="stat-label">Response Tokens</div>
+            <div class="stat-value" id="stat-response-tokens">-</div>
+        </div>
+        <div class="stat-card tokens" style="border-left: 4px solid #ec4899;">
             <div class="stat-label">Total Tokens Used</div>
             <div class="stat-value" id="stat-total-tokens">-</div>
         </div>
@@ -47,7 +76,7 @@
 
     <div class="charts-grid">
         <div class="chart-card">
-            <div class="chart-title">Token Consumption Trend (Last 7 Days)</div>
+            <div class="chart-title" id="chart-title-trend">Token Consumption Trend</div>
             <div style="height: 280px; position: relative;">
                 <canvas id="trendChart"></canvas>
             </div>

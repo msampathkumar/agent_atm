@@ -1,5 +1,52 @@
 let trendChartInstance = null;
 let appChartInstance = null;
+let currentWindow = "7d";
+let refreshIntervalId = null;
+
+const windowLabels = {
+    "1m": "Last 1 Month",
+    "7d": "Last 7 Days",
+    "3d": "Last 3 Days",
+    "1d": "Last 24 Hours",
+    "12h": "Last 12 Hours",
+    "6h": "Last 6 Hours",
+    "4h": "Last 4 Hours",
+    "2h": "Last 2 Hours",
+    "1h": "Last 1 Hour",
+    "30m": "Last 30 Minutes",
+    "15m": "Last 15 Minutes",
+    "5m": "Last 5 Minutes"
+};
+
+// Handle time window select change
+function onWindowChange(val) {
+    currentWindow = val;
+    document.getElementById('chart-title-trend').innerText = `Token Consumption Trend (${windowLabels[val]})`;
+    loadData();
+}
+
+// Start auto refresh polling
+function startAutoRefresh() {
+    if (refreshIntervalId) clearInterval(refreshIntervalId);
+    refreshIntervalId = setInterval(loadData, 10000);
+}
+
+// Stop auto refresh polling
+function stopAutoRefresh() {
+    if (refreshIntervalId) {
+        clearInterval(refreshIntervalId);
+        refreshIntervalId = null;
+    }
+}
+
+// Toggle auto refresh on switch/checkbox check
+function toggleAutoRefresh(enabled) {
+    if (enabled) {
+        startAutoRefresh();
+    } else {
+        stopAutoRefresh();
+    }
+}
 
 // Theme Toggle Logic
 function toggleTheme() {
@@ -32,13 +79,15 @@ function toggleTheme() {
 
 async function loadData() {
     try {
-        // 1. Fetch stats & charts data
-        const metricsRes = await fetch('/api/metrics');
+        // 1. Fetch stats & charts data using selected time-window
+        const metricsRes = await fetch(`/api/metrics?window=${currentWindow}`);
         const metrics = await metricsRes.json();
 
         document.getElementById('stat-total-events').innerText = metrics.stats.total_events.toLocaleString();
         document.getElementById('stat-total-requests').innerText = metrics.stats.total_requests.toLocaleString();
         document.getElementById('stat-total-responses').innerText = metrics.stats.total_responses.toLocaleString();
+        document.getElementById('stat-request-tokens').innerText = metrics.stats.total_request_tokens.toLocaleString();
+        document.getElementById('stat-response-tokens').innerText = metrics.stats.total_response_tokens.toLocaleString();
         document.getElementById('stat-total-tokens').innerText = metrics.stats.total_tokens.toLocaleString();
 
         // Dynamic color binding based on current active theme
@@ -46,28 +95,58 @@ async function loadData() {
         const textColor = currentTheme === 'light' ? '#4b5563' : '#9ca3af';
         const gridColor = currentTheme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.05)';
 
-        // Render Trend Chart
+        // Render Trend Chart with Multiple Datasets (Total, Request, Response)
         const trendCtx = document.getElementById('trendChart').getContext('2d');
         if (trendChartInstance) trendChartInstance.destroy();
+        
+        const chartLabels = metrics.chart_data.map(d => d.label);
         
         trendChartInstance = new Chart(trendCtx, {
             type: 'line',
             data: {
-                labels: metrics.daily_usage.map(d => d.day),
-                datasets: [{
-                    label: 'Tokens Consumed',
-                    data: metrics.daily_usage.map(d => d.tokens),
-                    borderColor: '#6366f1',
-                    backgroundColor: currentTheme === 'light' ? 'rgba(79, 70, 229, 0.08)' : 'rgba(99, 102, 241, 0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    borderWidth: 3
-                }]
+                labels: chartLabels,
+                datasets: [
+                    {
+                        label: 'Total Tokens',
+                        data: metrics.chart_data.map(d => d.total_tokens),
+                        borderColor: '#ec4899',
+                        backgroundColor: 'rgba(236, 72, 153, 0.05)',
+                        fill: false,
+                        tension: 0.3,
+                        borderWidth: 3
+                    },
+                    {
+                        label: 'Request Tokens',
+                        data: metrics.chart_data.map(d => d.request_tokens),
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                        fill: false,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        borderDash: [5, 5]
+                    },
+                    {
+                        label: 'Response Tokens',
+                        data: metrics.chart_data.map(d => d.response_tokens),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                        fill: false,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        borderDash: [3, 3]
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { color: currentTheme === 'light' ? '#111827' : '#f3f4f6', boxWidth: 15 }
+                    }
+                },
                 scales: {
                     y: { grid: { color: gridColor }, ticks: { color: textColor } },
                     x: { grid: { display: false }, ticks: { color: textColor } }
@@ -101,7 +180,7 @@ async function loadData() {
             }
         });
 
-        // 2. Fetch live events
+        // 2. Fetch live events (Limit remains 100)
         const eventsRes = await fetch('/api/events');
         const events = await eventsRes.json();
 
@@ -152,7 +231,11 @@ async function loadData() {
     }
 }
 
-// Initial load
+// Initial load setup
+document.getElementById('chart-title-trend').innerText = `Token Consumption Trend (${windowLabels[currentWindow]})`;
 loadData();
-// Poll every 10 seconds for real-time update feel
-setInterval(loadData, 10000);
+
+// Start auto-refresh dynamically based on initial checkbox state
+if (document.getElementById('auto-refresh-checkbox').checked) {
+    startAutoRefresh();
+}

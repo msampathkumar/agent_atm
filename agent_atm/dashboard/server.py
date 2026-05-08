@@ -11,7 +11,7 @@ from agent_atm.data_managers.sqlite import SqliteManager
 
 app = FastAPI(
     title="Agent Token Manager Dashboard",
-    description="Real-time token metrics, quota limit observances, and LLM telemetry."
+    description="Real-time token metrics, quota limit observances, and LLM telemetry.",
 )
 
 # Mount static assets directory for CSS, Javascript, and HTML resources
@@ -22,8 +22,11 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 DB_PATH = os.environ.get("ATM_DB_PATH", "agent_atm.db")
 db_manager = SqliteManager(db_path=DB_PATH)
 
+
 class EventPostSchema(BaseModel):
-    event_type: Literal["request", "response"] = Field(..., description="Event type: must be 'request' or 'response'")
+    event_type: Literal["request", "response"] = Field(
+        ..., description="Event type: must be 'request' or 'response'"
+    )
     token_count: int = Field(..., ge=0, description="Calculated token count")
     model_id: str = Field(..., description="ID of the LLM model used")
     username: Optional[str] = None
@@ -32,17 +35,21 @@ class EventPostSchema(BaseModel):
     tags: Optional[List[str]] = None
     config: Optional[Dict[str, str]] = None
 
+
 @app.get("/health")
 def health_check():
     """Health check endpoint for monitoring."""
     return {"status": "healthy", "database": "connected"}
 
+
 @app.post("/api/events", status_code=201)
 def create_event(payload: EventPostSchema):
     """Endpoint for Enterprise customers to post token telemetry events from distributed backend nodes."""
     if payload.event_type not in ("request", "response"):
-        raise HTTPException(status_code=400, detail="event_type must be either 'request' or 'response'")
-        
+        raise HTTPException(
+            status_code=400, detail="event_type must be either 'request' or 'response'"
+        )
+
     event = TokenEvent(
         timestamp=datetime.now(),
         event_type=payload.event_type,
@@ -52,45 +59,84 @@ def create_event(payload: EventPostSchema):
         session_id=payload.session_id,
         app_id=payload.app_id,
         _additional_metadata_tags=payload.tags or [],
-        _additional_metadata_config=payload.config or {}
+        _additional_metadata_config=payload.config or {},
     )
     db_manager.save(event)
-    return {"status": "success", "message": "Event successfully logged to backend telemetry store."}
+    return {
+        "status": "success",
+        "message": "Event successfully logged to backend telemetry store.",
+    }
+
 
 @app.get("/api/events")
-
-def get_events(limit: int = Query(100, description="Maximum number of events to return")):
+def get_events(
+    limit: int = Query(100, description="Maximum number of events to return"),
+):
     events = db_manager.get_all_events()
     # Return raw records in a serializable form
     serialized = []
     for ev in events[:limit]:
-        serialized.append({
-            "timestamp": ev.timestamp.isoformat(),
-            "event_type": ev.event_type,
-            "token_count": ev.token_count,
-            "model_id": ev.model_id,
-            "username": ev.username or "Anonymous",
-            "session_id": ev.session_id or "N/A",
-            "app_id": ev.app_id or "N/A",
-            "hostname": ev.hostname or "Unknown",
-            "tags": ev._additional_metadata_tags,
-            "config": ev._additional_metadata_config
-        })
+        serialized.append(
+            {
+                "timestamp": ev.timestamp.isoformat(),
+                "event_type": ev.event_type,
+                "token_count": ev.token_count,
+                "model_id": ev.model_id,
+                "username": ev.username or "Anonymous",
+                "session_id": ev.session_id or "N/A",
+                "app_id": ev.app_id or "N/A",
+                "hostname": ev.hostname or "Unknown",
+                "tags": ev._additional_metadata_tags,
+                "config": ev._additional_metadata_config,
+            }
+        )
 
     return serialized
 
+
 @app.get("/api/metrics")
-def get_metrics():
-    events = db_manager.get_all_events()
+def get_metrics(
+    window: str = Query("7d", description="Time window for metrics dashboard"),
+):
+    now = datetime.now()
+
+    window_map = {
+        "1m": timedelta(days=30),
+        "7d": timedelta(days=7),
+        "3d": timedelta(days=3),
+        "1d": timedelta(days=1),
+        "12h": timedelta(hours=12),
+        "6h": timedelta(hours=6),
+        "4h": timedelta(hours=4),
+        "2h": timedelta(hours=2),
+        "1h": timedelta(hours=1),
+        "30m": timedelta(minutes=30),
+        "15m": timedelta(minutes=15),
+        "5m": timedelta(minutes=5),
+    }
+
+    delta = window_map.get(window, timedelta(days=7))
+    cutoff = now - delta
+
+    all_events = db_manager.get_all_events()
+    events = [e for e in all_events if e.timestamp >= cutoff]
+
     total_requests = sum(1 for e in events if e.event_type == "request")
     total_responses = sum(1 for e in events if e.event_type == "response")
     total_tokens = sum(e.token_count for e in events)
-    
+
+    total_request_tokens = sum(
+        e.token_count for e in events if e.event_type == "request"
+    )
+    total_response_tokens = sum(
+        e.token_count for e in events if e.event_type == "response"
+    )
+
     # Calculate aggregates by model
     model_counts = {}
     for e in events:
         model_counts[e.model_id] = model_counts.get(e.model_id, 0) + e.token_count
-        
+
     # Calculate aggregates by app
     app_counts = {}
     for e in events:
@@ -103,30 +149,66 @@ def get_metrics():
         u_name = e.username or "Anonymous"
         user_counts[u_name] = user_counts.get(u_name, 0) + e.token_count
 
-    # Token consumption over time (last 7 days breakdown)
-    now = datetime.now()
-    daily_usage = {}
-    for i in range(7):
-        day = (now - timedelta(days=i)).strftime("%Y-%m-%d")
-        daily_usage[day] = 0
+    # Dynamic chart aggregation: Divide the window into 12 intervals
+    num_intervals = 12
+    interval_duration = delta / num_intervals
+
+    def format_label(dt: datetime, w_delta: timedelta) -> str:
+        if w_delta > timedelta(days=2):
+            return dt.strftime("%b %d")
+        elif w_delta > timedelta(hours=2):
+            return dt.strftime("%H:%M")
+        else:
+            return dt.strftime("%H:%M:%S")
+
+    intervals = []
+    for i in range(num_intervals):
+        start_time = cutoff + (i * interval_duration)
+        end_time = start_time + interval_duration
+        intervals.append(
+            {
+                "start": start_time,
+                "end": end_time,
+                "label": format_label(start_time, delta),
+                "request_tokens": 0,
+                "response_tokens": 0,
+                "total_tokens": 0,
+            }
+        )
 
     for e in events:
-        day_str = e.timestamp.strftime("%Y-%m-%d")
-        if day_str in daily_usage:
-            daily_usage[day_str] += e.token_count
+        for interval in intervals:
+            if interval["start"] <= e.timestamp < interval["end"]:
+                interval["total_tokens"] += e.token_count
+                if e.event_type == "request":
+                    interval["request_tokens"] += e.token_count
+                elif e.event_type == "response":
+                    interval["response_tokens"] += e.token_count
+                break
 
     return {
         "stats": {
             "total_events": len(events),
             "total_requests": total_requests,
             "total_responses": total_responses,
-            "total_tokens": total_tokens
+            "total_tokens": total_tokens,
+            "total_request_tokens": total_request_tokens,
+            "total_response_tokens": total_response_tokens,
         },
         "by_model": model_counts,
         "by_app": app_counts,
         "by_user": user_counts,
-        "daily_usage": [{"day": k, "tokens": v} for k, v in sorted(daily_usage.items())]
+        "chart_data": [
+            {
+                "label": item["label"],
+                "request_tokens": item["request_tokens"],
+                "response_tokens": item["response_tokens"],
+                "total_tokens": item["total_tokens"],
+            }
+            for item in intervals
+        ],
     }
+
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard_index():
