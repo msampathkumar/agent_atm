@@ -46,7 +46,7 @@ build:
 
 publish:
 	@echo "--> Publishing library to PyPI..."
-	uv publish
+	twine upload dist/* # uv publish
 
 clean:
 	@echo "--> Cleaning python cache folders and database files..."

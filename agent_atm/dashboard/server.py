@@ -14,9 +14,11 @@ app = FastAPI(
     description="Real-time token metrics, quota limit observances, and LLM telemetry.",
 )
 
-# Mount static assets directory for CSS, Javascript, and HTML resources
+# Mount static assets directory for CSS, Javascript, and HTML resources if present
 static_dir = os.path.join(os.path.dirname(__file__), "static")
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 
 # Resolve database path from environment or default
 DB_PATH = os.environ.get("ATM_DB_PATH", "agent_atm.db")
@@ -214,5 +216,11 @@ def get_metrics(
 def dashboard_index():
     """Serve the standalone modular Dashboard HTML interface."""
     index_path = os.path.join(os.path.dirname(__file__), "static", "index.html")
+    if not os.path.exists(index_path):
+        return HTMLResponse(
+            content="<h1>Dashboard UI Assets Missing</h1><p>Please ensure the package was installed correctly with static assets, or run within a fully developed repository source tree.</p>",
+            status_code=404,
+        )
     with open(index_path, "r", encoding="utf-8") as f:
         return f.read()
+

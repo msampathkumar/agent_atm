@@ -317,3 +317,14 @@ def test_curl_shell_scripts(atm_server):
     for resp in responses2:
         assert resp["status"] == "success"
         assert "Event successfully logged" in resp["message"]
+
+
+def test_server_missing_static_files():
+    from unittest.mock import patch
+    from agent_atm.dashboard.server import dashboard_index
+
+    with patch("os.path.exists", return_value=False):
+        response = dashboard_index()
+        assert response.status_code == 404
+        assert "Dashboard UI Assets Missing" in response.body.decode("utf-8")
+
