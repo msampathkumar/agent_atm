@@ -198,9 +198,6 @@ def test_client_error_handling(atm_server):
 
 
 def test_metrics_all_windows(atm_server):
-    c = client.Client(base_url=atm_server)
-    assert c, "Failed to create client"
-
     windows = [
         "1m",
         "7d",
@@ -238,3 +235,85 @@ def test_client_check_payload_override():
     info = c.check_payload(payload)
     assert info["token_count"] == 42
     assert info["event_type"] == "response"
+
+
+def test_client_various_inputs(atm_server):
+    c = client.Client(base_url=atm_server)
+
+    # 1. Just token info
+    res = c.send_event(event_type="request", token_count=10, model_id="m1")
+    assert res["status"] == "success"
+    res = c.send_event(event_type="response", token_count=15, model_id="m1")
+    assert res["status"] == "success"
+
+    # 2. Token info + 1 tag
+    res = c.send_event(
+        event_type="request", token_count=20, model_id="m1", tags=["tag1"]
+    )
+    assert res["status"] == "success"
+    res = c.send_event(
+        event_type="response", token_count=25, model_id="m1", tags=["tag2"]
+    )
+    assert res["status"] == "success"
+
+    # 3. Token info + server (app_id) + model info
+    res = c.send_event(
+        event_type="request",
+        token_count=30,
+        model_id="custom-model-1",
+        app_id="server-a",
+    )
+    assert res["status"] == "success"
+    res = c.send_event(
+        event_type="response",
+        token_count=35,
+        model_id="custom-model-1",
+        app_id="server-a",
+    )
+    assert res["status"] == "success"
+
+    # 4. Token info + user
+    res = c.send_event(
+        event_type="request", token_count=40, model_id="m1", username="bob"
+    )
+    assert res["status"] == "success"
+    res = c.send_event(
+        event_type="response", token_count=45, model_id="m1", username="bob"
+    )
+    assert res["status"] == "success"
+
+
+def test_curl_shell_scripts(atm_server):
+    import subprocess
+
+    def parse_responses(output: str):
+        responses = []
+        for line in output.splitlines():
+            if line.strip().startswith("{") and line.strip().endswith("}"):
+                try:
+                    responses.append(json.loads(line))
+                except Exception:
+                    pass
+        return responses
+
+    # 1. Execute post_request.sh
+    res1 = subprocess.run(
+        ["./post_request.sh", atm_server], capture_output=True, text=True
+    )
+    assert res1.returncode == 0
+    responses1 = parse_responses(res1.stdout)
+    assert len(responses1) == 5
+    for resp in responses1:
+        assert resp["status"] == "success"
+        assert "Event successfully logged" in resp["message"]
+
+    # 2. Execute post_response.sh
+    res2 = subprocess.run(
+        ["./post_response.sh", atm_server], capture_output=True, text=True
+    )
+    assert res2.returncode == 0
+    responses2 = parse_responses(res2.stdout)
+    assert len(responses2) == 5
+    for resp in responses2:
+        assert resp["status"] == "success"
+        assert "Event successfully logged" in resp["message"]
