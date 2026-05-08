@@ -1,130 +1,51 @@
-# Gemini & Gemma Developer's Handbook (`agent-atm`)
+# Google Models Developer Guide & Handbook (`agent-atm`)
 
-This guide documents how to use `agent-atm` to observe, measure, and control token consumption natively when building applications powered by Google's **Gemini** models (using the `google-genai` SDK) and **Gemma** models (using `gemma` and `Gemma3Tokenizer`).
-
----
-
-## 1. Google Gemini Integration
-
-`agent-atm` features native, duck-typed extraction for the new `google-genai` SDK responses. It automatically inspects the response `usage_metadata` to record exact token metrics without any extra coding.
-
-### 🚀 Quick Start: Gemini 2.5
-
-```python
-import os
-from google import genai
-import agent_atm as atm
-
-# 1. Initialize Agent Token Manager
-atm.init(data_manager="sqlite", db_path="usage.db", default_app_id="customer-support")
-
-# 2. Initialize native Google GenAI client
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-
-# 3. Use ATM Context Scoping to track sessions
-with atm.context(session_id="sess-vip-99", username="alice@example.com", tier="platinum"):
-    
-    prompt = "Draft a professional email response regarding refund query."
-    
-    # Log the request (optional: ATM will automatically parse from response metadata)
-    atm.add_user_request(prompt, model_id="gemini-2.5-flash")
-    
-    # Execute Gemini request
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=prompt,
-    )
-    
-    # Record response: ATM auto-extracts candidate and prompt counts from usage_metadata!
-    atm.add_model_response(response, model_id="gemini-2.5-flash")
-```
+This handbook details the design goals, architectural styling, and out-of-the-box capabilities when integrating `agent-atm` with Google's flagship model families: **Gemini** (running on Vertex AI or Google GenAI SDK) and **Gemma** (running locally).
 
 ---
 
-## 2. Google Gemma Integration & Gemma3Tokenizer
+## 🎯 1. Strategic Goals & Design Philosophy
 
-`agent-atm` provides complete out-of-the-box support for local Gemma tokenizers, including the new **`Gemma3Tokenizer`** from Google DeepMind. 
+When integrating LLM workflows with Google’s models, `agent-atm` is governed by three key architectural pillars:
 
-### 🚀 Quick Start: Gemma 3 Tokenizer
+### I. Privacy-First Curation
+Google models power critical enterprise applications. To remain compliant with strict security standards, `agent-atm` guarantees that **prompt or response text never touches persistent storage**. Incoming content parameters are loaded only in-memory to extract token counts and then instantly garbage-collected.
 
-Because `gemma` PyPI distributions nest tokenizers under internal `gemma.gm.text` namespaces, `agent-atm` provides an **automatic import forwarding alias**. You can import `Gemma3Tokenizer` directly from `gemma.text` natively:
+### II. Zero-Dependency Footprint
+The SDK does not bundle large model dependencies or framework drivers. All integrations are developed using lightweight, clean abstractions that safely duck-type Google client structures without introducing third-party package bloat.
 
-```python
-from gemma.text import Gemma3Tokenizer
-import agent_atm as atm
-
-# 1. Instantiate Google Gemma3Tokenizer
-tokenizer = Gemma3Tokenizer()
-
-# 2. Initialize ATM with the Gemma tokenizer
-atm.init(data_manager="in_memory", tokenizer=tokenizer)
-
-# 3. Record usage: ATM will natively use tokenizer.encode() to calculate exact tokens!
-atm.add_user_request("Hello Gemma 3, summarize this text.", model_id="gemma-3")
-```
-
-### 📊 Tracking Sampler List/Array Outputs Natively
-If your local Gemma sampling pipelines return raw token lists or `NumPy`/`JAX` arrays, you can pass them directly to the recording APIs. `agent-atm` automatically detects and counts the token IDs directly:
-
-```python
-# Pass raw list of generated token IDs directly
-token_ids = [106, 422, 1928, 33, 2, 1]
-atm.add_model_response(token_ids, model_id="gemma-3") # Counts exactly 6 tokens!
-```
+### III. Zero-Latency Overhead
+All telemetry calculations run strictly asynchronously or as low-overhead in-process calculations, ensuring that observation loops do not block critical text generation times in production agent networks.
 
 ---
 
-## 3. Advanced Telemetry & Quota Caps
+## 💎 Built-In Capabilities for Google Ecosystems
 
-You can easily wrap your Gemini/Gemma calls with strict minute-level, hourly, or daily token quota caps to prevent API overrun.
+`agent-atm` ships with native, pre-configured support tailored for Google's developer environments:
 
-```python
-import agent_atm as atm
+### Google GenAI Response Extraction
+The SDK natively reads the structure of the `google-genai` Client response payload. It inspects internal metadata values (such as prompt and candidates counts inside standard usage models) to capture exact metrics without requiring manual parameter passing.
 
-# 1. Limit free tier users to 500 tokens per minute
-atm.limits.add(
-    scope=atm.Scope(user="free-tier"),
-    quota=atm.Quota(minute_limit=500),
-    alert_level=atm.AlertLevel.BLOCKING
-)
+### Gemma Tokenizer Mappings
+For local Gemma model testing pipelines, `agent-atm` implements automated namespace forwardings. This allows developers to import the premium `Gemma3Tokenizer` directly and resolve dependencies smoothly under the hood.
 
-# 2. Execute within scoped context
-with atm.context(username="free-tier"):
-    try:
-        # This check will evaluate daily/minute token consumption before running
-        atm.add_user_request("Extremely long text...", model_id="gemini-2.5-pro")
-        
-        # Execute LLM call...
-        
-    except atm.TokenQuotaExceeded as e:
-        # Gracefully capture breach and reject request or notify user
-        print(f"API access blocked: {e}")
-```
+### Multi-Dimensional Context Mapping
+Using context scoping blocks, developers can easily tag Gemini/Gemma metrics with multi-layered configuration parameters (e.g., customer tiers, prompt sections, departments). This data is instantly mapped to the dark-mode visual console for granular analytics.
 
 ---
 
-## 4. Real-Time Dashboard
+## 🛡️ Operational Controls
 
-View all telemetry, tags, and department configs captured from your Gemini and Gemma workflows by launching the premium metrics dashboard server:
+When executing Google model generations, `agent-atm` acts as an active governance gatekeeper:
 
-```bash
-# Launch FastAPI Daemon server
-ATM_DB_PATH=usage.db uvicorn agent_atm.dashboard.server:app --reload
-```
-Open your browser to **`http://127.0.0.1:8000`** to watch usage trend charts, app distributions, and live logs.
+### Reactive Token Quotas
+Set minute-level, hourly, or daily token budget limits specifically scoped to Gemini model invocations. If a customer session exceeds the defined threshold, further LLM requests are strictly blocked, preventing billing surprises.
+
+### Pre and Post Intercepting Hooks
+Run custom decorators around Google model executions. Use pre-save hooks to validate metadata context before it reaches database storage, or register post-save hooks to trigger external Slack alerts on high-volume responses.
 
 ---
 
-## 5. Contributing Google Model Integrations
+## 📊 Analytics & Remote Collection
 
-We welcome contributions to expand Google-specific observability. If you are looking to add new tokenizers, JAX/Jupyter notebook helpers, or vertex AI integrations:
-
-### Extending `agent-atm` for new Google Models:
-1. **Implement a new tokenizer module**: Save under `agent_atm/tokenizers/<model_group>.py`.
-2. **conform to LLMPayload**: Ensure all JAX or PyTorch response parsing duck-types against `payload.content`.
-3. **Validate hermetically**: Write unit tests inside `tests/test_core.py` using `unittest.mock` to test your extraction shims without requiring massive model weight downloads.
-4. **Run local verification**:
-   ```bash
-   pytest tests/ -k "google"
-   ```
-
+All Google model events can be visualized in real-time on the local visual metrics console. Alternatively, in distributed Kubernetes/Jupyter environments, remote application nodes can push Gemini token telemetry directly to a central standalone collector using standard JSON API requests.

@@ -10,29 +10,33 @@ A premium, lightweight, privacy-first Python SDK designed to measure, observe, a
 
 ### System Component Diagram
 
+
+## ⚙️ Core Architecture
+
 ```mermaid
 graph TD
-    App[User Application] -->|Imports & Uses| SDK[agent-atm SDK]
-    SDK -->|1. Pre-Hooks / Limits| QuotaEngine[Quota & Validation Engine]
-    SDK -->|2. Parse Token Counts| Tokenizer[Tokenizer / Integration Engine]
-    SDK -->|3. Save Metrics (Sync/Async)| DataManager[DataManager Interface]
+    App["Your Application"] -->|Imports & Scopes| SDK[agent-atm SDK]
+    SDK -->|1. Pre-Hooks / Quota Checks| QuotaEngine[Limits & Quota Engine]
+    SDK -->|2. Auto-extract / Tokenize| Tokenizer[Tokenizer Integrations]
+    SDK -->|3. Save Metrics Sync/Async| DataManager[DataManager Interface]
     
-    subgraph Integrations
-        Tokenizer -->|Auto-extract| GenAI[Google GenAI]
-        Tokenizer -->|Auto-extract| CrewAI[CrewAI]
-        Tokenizer -->|Auto-extract| LangGraph[LangGraph]
+    subgraph Tokenizers
+        Tokenizer -->|Base Tokenizer| BaseTokenizerIntegration
+        BaseTokenizerIntegration -->|Gemini SDK Responses| GenAI[GoogleGenAITokenizer]
+        BaseTokenizerIntegration -->|Gemma Lists & Arrays| Gemma[GemmaTokenizerIntegration]
+        BaseTokenizerIntegration -->|Standard fallback| Tiktoken[DefaultTokenizer]
     end
 
-    subgraph Storage Managers
-        DataManager -->|Default| InMemory[InMemoryManager]
-        DataManager -->|v0.1.0| SQLite[SqliteManager]
-        DataManager -->|v0.2.0| Redis[RedisManager]
+    subgraph Storage Backends
+        DataManager -->|Base Data Manager| BaseDataManager
+        BaseDataManager -->|Dev/Testing| InMemory[InMemoryManager]
+        BaseDataManager -->|Staging/Single Node| SQLite[SqliteManager]
     end
 
-    subgraph Telemetry & Visualization
-        SQLite -->|Read metrics| Daemon[FastAPI Daemon Server]
-        Redis -->|Read metrics| Daemon
-        Daemon -->|Serve UI| Dashboard[Web Dashboard]
+    subgraph Analytics Server
+        SQLite -->|Read telemetry| FastAPI[FastAPI Daemon Server]
+        FastAPI -->|Serve live metrics| UI[Premium Dark Mode UI]
+        RemoteApp["Remote Applications"] -->|HTTP POST /api/events| FastAPI
     end
 ```
 

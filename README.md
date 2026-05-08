@@ -7,124 +7,70 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-24%20passed-brightgreen.svg)](tests/)
 
-`agent-atm` is a lightweight, **privacy-first** Python SDK designed to observe, measure, and cap LLM token consumption natively within your application workflows.
+`agent-atm` is a lightweight, **privacy-first** Python SDK built to monitor, measure, and cap LLM token consumption natively inside application workflows.
 
-Built as a premium control and monitoring utility for agentic systems, it plugs seamlessly into any model or agent framework to **record precise token metrics**, manage nested metadata scopes, and **enforce strict daily, hourly, or minute-level budgets**.
+Designed as a high-performance observability and control utility for agentic systems, it plugs seamlessly into any model or agent framework to **record precise token metrics**, manage nested metadata scopes, and **enforce real-time budget quotas** over daily, hourly, or minute-level windows.
 
 ---
 
 ## ✨ Key Features
 
-* **Plug-and-Play Logging**: Simple, intuitive API styled like Python's standard logging library. Get up and running with standard token tracking in minutes.
-* **Extensible Architecture**: Designed with clean abstractions (interfaces for data managers, tokenizers) that make it trivial to integrate custom models, databases, or tokenizers.
-* **Absolute Privacy Guarantee**: **Zero prompt or response persistence**. Input text is processed strictly in-memory to compute token counts and is instantly discarded.
-* **Flexible Storage Engines**: Shipped with a built-in `InMemoryManager` for testing and a robust `SqliteManager` for single-node deployments, easily extendable to any database.
-* **HTTP REST Daemon**: Built-in FastAPI server acting as a centralized collector to receive telemetry updates asynchronously from remote SDK instances.
-* **Real-Time Dashboard**: Premium dark-mode web UI to visualize token consumption trends, trace nested context scopes, and monitor live budget allocations.
+* **Plug-and-Play Observability**: An intuitive API designed to feel as familiar as Python's standard logging library.
+* **Extensible Interface Architecture**: Built on clean, developer-friendly abstractions (interfaces for storage managers and tokenizers), making custom integrations simple.
+* **Privacy-First Guarantee**: **Zero raw prompt or response text storage**. All incoming text is parsed strictly in-memory to calculate token metrics and instantly discarded.
+* **Flexible Storage Managers**: Shipped with a thread-safe `InMemoryManager` for rapid local testing and a robust `SqliteManager` for persistent single-node deployments.
+* **Centralized Telemetry Daemon**: A built-in FastAPI server serving as a centralized collector to asynchronously gather token events from distributed client instances.
+* **Premium Visual Analytics**: A modern, interactive dark-mode dashboard to view token trends, audit active configurations, and track live budget allocations.
 
 ---
 
-## 🎯 Intent: What to Expect & What NOT to Expect
+## 🚀 Quick Setup
 
-To help you get started quickly and correctly, here is a clear overview of what `agent-atm` is and isn't designed to do:
-
-### 🟢 What to Expect
-* **Native SDK Integration**: A lightweight Python SDK running directly inside your application (no heavy external sidecars required).
-* **Automatic Token Extraction**: Natively parses Google GenAI (`google-genai`) response objects and extracts prompt/candidate counts directly from `usage_metadata`.
-* **Gemma Tokenizer Support**: Complete out-of-the-box compatibility with Google DeepMind's `Gemma3Tokenizer` and raw sampling outputs (arrays/lists).
-* **Nested Metadata Scoping**: A clean `with atm.context(...)` manager to automatically cascade tags, session IDs, and customer tiers across nested function blocks.
-* **Strict Quota Capping**: Automatic in-memory checks that can raise blocking exceptions when daily, hourly, or minute-level budgets are exceeded.
-* **Absolute Privacy**: **Zero prompt/response storage**. Inputs are processed strictly in-memory to compute token counts and then instantly garbage collected.
-* **Fast, Modern Setup**: Zero-configuration developer onboarding powered by the ultra-fast `uv` Python toolchain.
-
-### 🔴 What NOT to Expect
-* **Not a Proxy / Gateway**: `agent-atm` does not intercept your raw network requests or act as an intermediate server between your application and Google Gemini.
-* **No Automatic Interception**: It does not auto-monkeypatch standard HTTP libraries; event telemetry is logged voluntarily via SDK calls (`add_user_request` / `add_model_response`) or explicit decorators.
-* **Not an LLM Orchestrator**: It does not manage model parameters, retries, temperature, or text generation.
-* **Not a Persistent Content Vault**: Because of its privacy-first guarantee, you cannot retrieve raw prompt strings later; only numerical counts and metadata tags are recorded.
-
----
-
-## ⚙️ Core Architecture
-
-```mermaid
-graph TD
-    App["Your Application"] -->|Imports & Scopes| SDK[agent-atm SDK]
-    SDK -->|1. Pre-Hooks / Quota Checks| QuotaEngine[Limits & Quota Engine]
-    SDK -->|2. Auto-extract / Tokenize| Tokenizer[Tokenizer Integrations]
-    SDK -->|3. Save Metrics Sync/Async| DataManager[DataManager Interface]
-    
-    subgraph Tokenizers
-        Tokenizer -->|Base Tokenizer| BaseTokenizerIntegration
-        BaseTokenizerIntegration -->|Gemini SDK Responses| GenAI[GoogleGenAITokenizer]
-        BaseTokenizerIntegration -->|Gemma Lists & Arrays| Gemma[GemmaTokenizerIntegration]
-        BaseTokenizerIntegration -->|Standard fallback| Tiktoken[DefaultTokenizer]
-    end
-
-    subgraph Storage Backends
-        DataManager -->|Base Data Manager| BaseDataManager
-        BaseDataManager -->|Dev/Testing| InMemory[InMemoryManager]
-        BaseDataManager -->|Staging/Single Node| SQLite[SqliteManager]
-    end
-
-    subgraph Analytics Server
-        SQLite -->|Read telemetry| FastAPI[FastAPI Daemon Server]
-        FastAPI -->|Serve live metrics| UI[Premium Dark Mode UI]
-        RemoteApp["Remote Applications"] -->|HTTP POST /api/events| FastAPI
-    end
-```
-
-### 🔒 Privacy-First Guarantee
-To ensure absolute user data protection, `agent-atm` **never stores raw prompt or response text** in its Data Managers. Inputs passed into the logging APIs are processed strictly in-memory to compute token counts and are then immediately discarded. The storage manager only persists numerical token counts, timestamps, model IDs, and user-scoped metadata.
-
-For more information check, [docs/privacy_guarantee.md](docs/privacy_guarantee.md).
-
----
-
-## 🚀 Quick Start
-
-Get up and running in less than 60 seconds.
+Get up and running in less than 60 seconds using either the local SDK or a centralized standalone telemetry server.
 
 ### 1. Installation
-
-For a lightning-fast setup, we recommend using **`uv`** (the ultra-fast Python packaging tool):
-
 ```bash
-# Install in your project
-uv add agent-atm
+pip install agent-atm
 ```
 
-*(Alternatively, use standard pip: `pip install agent-atm`)*
+---
 
-### 2. Simple Global Logger (Singleton-Style)
-Perfect for standard scripts and single-tenant applications:
+### 2. Setup Storage & Record Telemetry
+Perfect for Python applications running in-process. Initialize the SQLite storage engine and begin logging request and response telemetry:
 
 ```python
 import agent_atm as atm
 
-# Initialize globally
-atm.init(data_manager="sqlite", db_path="agent_atm.db", default_app_id="my-chatbot")
+# Initialize local SQLite persistent database
+atm.init(data_manager="sqlite", db_path="agent_atm.db", default_app_id="customer-bot")
 
-# Option 1: Log user requests & model responses with token_count
-atm.add_user_request(token_count=50, model_id="gemini-2.5-flash")
-atm.add_model_response(token_count=150, model_id="gemini-2.5-flash")
+# Record a request event with token count and tags
+atm.add_user_request(token_count=32, _additional_metadata_tags=["user-prompt"])
 
-# Option 2: Log user requests & model responses  with content (for supported models & available tokenizers)
-atm.add_user_request("What is the capital of France?", model_id="gemini-2.5-flash")
-atm.add_model_response("The capital of France is Paris.", model_id="gemini-2.5-flash")
+# Record a response event with token count and tags
+atm.add_model_response(token_count=120, _additional_metadata_tags=["gemini-response"])
 ```
 
-### 3. Logging Token Counts Directly (No Text Content)
-If you already have the exact token counts (e.g., from a model provider's response API) or wish to keep prompt/response text completely out of the SDK, you can log the token count directly without passing any text or content placeholder parameters:
+
+> **Granular Observability**: For token usage analysis, atm allow the recording of context attributes like, `model_id`, `username`, `session_id`, `app_id`, `token_count`, list tags (`_additional_metadata_tags`), and arbitrary key-value config dicts (`_additional_metadata_config`).
+
+#### Feature: Direct `LLMPayload` Dataclass Logging
+For advanced configurations, wrap LLM inputs in an explicit `LLMPayload` object:
 
 ```python
-# Log token metrics directly
-atm.add_user_request(token_count=150, model_id="gemini-2.5-flash")
-atm.add_model_response(token_count=320, model_id="gemini-2.5-flash")
-```
-This completely bypasses all in-memory tokenizer integrations and registers your exact token budgets instantly.
+from agent_atm.types import LLMPayload
 
-### 4. Deeply Nested Context Scoping
+payload = LLMPayload(
+    token_count_override=45,
+    model_id="example-model",
+    event_type="request" # or "response"
+    _additional_metadata_tags=["dev-test"],
+    _additional_metadata_config={"node_id": "emea-east-1"}
+)
+atm.add_user_request(payload)
+```
+
+#### Feature: Nested Context Scoping
 Cascade session IDs, user attributes, and tags cleanly across deeply nested function calls without passing parameters down the stack:
 
 ```python
@@ -137,23 +83,8 @@ with atm.context(
     # Seamlessly inherits session_id, username, tags, and department configs
     atm.add_user_request("How does compound interest work?", model_id="gemini-2.5-pro")
 ```
-### 4. Direct `LLMPayload` Dataclass Logging
-For advanced configurations, wrap LLM inputs in an explicit `LLMPayload` object:
 
-```python
-from agent_atm.types import LLMPayload
-
-payload = LLMPayload(
-    content="Evaluate option volatility index.",
-    model_id="gemini-pro",
-    token_count_override=150,
-    _additional_metadata_tags=["options-trading"],
-    _additional_metadata_config={"priority": "high"}
-)
-atm.add_user_request(payload)
-```
-
-### 4. Native Google Gemini Observability
+#### Feature: Native Google Gemini Observability
 When passing a real `google-genai` SDK client response, `agent-atm` automatically extracts precise metrics directly from the native Google usage metadata:
 
 ```python
@@ -186,61 +117,116 @@ with atm.context(session_id="sess-vip-99", username="alice@example.com"):
 
 ---
 
+### 3. Pure Web API Style: Central Telemetry Server & curl Commands
+Perfect for enterprise microservice environments. Run the `agent-atm` server standalone and report events from **any programming language** via standard REST HTTP requests:
 
-## 🛠️ Advanced Features
+#### Launch the Standalone Telemetry Daemon:
+```bash
+ATM_DB_PATH=agent_atm.db uvicorn agent_atm.dashboard.server:app --host 127.0.0.1 --port 8000
+```
 
-### 🛡️ Token Quota Limits & Budget Enforcement
-strictly prevent API budget overrun by matching token usage against minute, hourly, or daily quotas. Breaching a blocking limit raises a `TokenQuotaExceeded` exception that you can catch to block further requests:
+#### Push Telemetry via curl (fully independent of Python/SDK):
+```bash
+# Log a User Request Event
+curl -X POST http://127.0.0.1:8000/api/events \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_type": "request",
+    "token_count": 45,
+    "model_id": "gemini-2.5-pro",
+    "username": "alice@company.com",
+    "session_id": "session-abc-999",
+    "app_id": "finance-agent",
+    "tags": ["api-call", "production"],
+    "config": {"node_id": "aws-east-1"}
+  }'
+
+# Log a Model Response Event
+curl -X POST http://127.0.0.1:8000/api/events \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_type": "response",
+    "token_count": 180,
+    "model_id": "gemini-2.5-pro",
+    "username": "alice@company.com",
+    "session_id": "session-abc-999",
+    "app_id": "finance-agent",
+    "tags": ["api-response", "production"]
+  }'
+```
+
+---
+
+## 🤖 Native Tokenizer Integrations
+
+For specific families like **Google Gemini** (`google-genai` SDK) and **Google Gemma** (`Gemma3Tokenizer`), `agent-atm` provides **in-built tokenizer mappings**. 
+
+Instead of calculating token counts manually, you can pass the raw string `content` directly and let the SDK compute and track metrics automatically:
 
 ```python
-# Limit free-tier users to 100 tokens per minute
+# Pass the raw prompt: ATM automatically tokenizes and counts the metrics under the hood!
+atm.add_user_request("Explain quantum computing in simple terms.", model_id="gemma-3")
+```
+
+> [!TIP]
+> **Custom Tokenizer Extensibility**: Using another provider? Check our baseline **[BaseTokenizerIntegration](file:///Users/sampathm/github/agent_token_manager/agent_atm/tokenizers/base.py)** class to see how easy it is to implement a custom tokenizer module.
+
+---
+
+## 🛡️ ATM Controls: Rules, Hooks & Quota Caps
+
+Take complete control of your LLM consumption using reactive quota caps and custom event interceptors:
+
+### 1. Dynamic Quota Budgeting
+Enforce strict token ceilings over minute, hourly, or daily windows per user or app scope. Exceeding a blocking quota raises a `TokenQuotaExceeded` exception, allowing you to gracefully handle and reject further LLM calls:
+```python
+# Limit free-tier users to 500 tokens per minute
 atm.limits.add(
     scope=atm.Scope(user="free-tier"),
-    quota=atm.Quota(minute_limit=100),
+    quota=atm.Quota(minute_limit=500),
     alert_level=atm.AlertLevel.BLOCKING
 )
 
 with atm.context(username="free-tier"):
     try:
-        # This call checks current 1-minute usage first. If >100, it raises exception
-        atm.add_user_request("Very long text...", token_count=120)
+        # If minute consumption exceeds 500, this raises TokenQuotaExceeded
+        atm.add_user_request("Some very long prompt text...", token_count=600)
     except atm.TokenQuotaExceeded as e:
-        print(f"API access capped: {e}")
+        print(f"Request Blocked: {e}")
 ```
 
-### 🪝 Pre and Post Hooks Registry
-Register custom callback validators or alert systems that execute around the event recording pipeline:
-
+### 2. Pre & Post Hook Interceptors
+Register custom hook decorators to validate contexts, mutate event scopes, or trigger asynchronous notifications (like Slack webhooks) around database writes:
 ```python
 @atm.hook("pre")
 def pre_save_audit(event):
-    # Mutate or validate telemetry BEFORE it's written
+    # Mutate or validate event metadata BEFORE the database write
     event._additional_metadata_tags.append("audited")
 
 @atm.hook("post")
-def slack_webhook(event):
-    # Trigger Slack alerts or external notifications AFTER the write
-    if event.token_count > 5000:
-        send_slack_alert(f"Large consumption: {event.token_count} tokens")
+def slack_alert(event):
+    # Trigger non-blocking alerts AFTER the event is successfully written
+    if event.token_count > 10000:
+        trigger_slack_notification(f"Warning: High token consumption detected: {event.token_count}")
 ```
 
 ---
 
-## 📊 Real-Time Telemetry Dashboard
+## 📊 Real-Time Analytics Dashboard
 
-Launch the FastAPI daemon server to view real-time token consumption trend lines, app allocations, top-using accounts, and live logs inside a premium, dark-mode visual dashboard:
+Start the telemetry metrics daemon to view real-time consumption trend lines, aggregate app metrics, top-consuming users, and live event telemetry logs inside a premium visual dashboard:
 
 ```bash
-ATM_DB_PATH=agent_atm.db uvicorn agent_atm.dashboard.server:app --reload
+ATM_DB_PATH=agent_atm.db uvicorn agent_atm.dashboard.server:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Open your web browser to **`http://127.0.0.1:8000`** to watch the visual metrics update in real-time.
+Open your web browser to **`http://127.0.0.1:8000`** to access the visual console.
 
 ---
 
-## 📖 Additional Guides
+## 📖 Additional Resources
 
-* **[docs/GEMINI.md](docs/GEMINI.md)**: Google Gemini & Gemma Tokenizer Developer Integration Guide.
-* **[docs/atm_webserver.md](docs/atm_webserver.md)**: Telemetry Webserver Daemon Setup & curl API testing instructions.
-* **[docs/privacy_guarantee.md](docs/privacy_guarantee.md)**: In-depth code verification of the SDK's absolute Privacy Guarantee.
-* **[CONTRIBUTING.md](CONTRIBUTING.md)**: Development Setup, Contribution Guidelines, and Testing Suite Instructions.
+* **[GEMINI.md](file:///Users/sampathm/github/agent_token_manager/GEMINI.md)**: Native Gemini & Gemma Tokenizer Integration Handbook.
+* **[CONTRIBUTING.md](file:///Users/sampathm/github/agent_token_manager/CONTRIBUTING.md)**: Contribution Rules, Virtual Env Setup, and Automated Testing Suite Guide.
+* **[FUTURE.md](file:///Users/sampathm/github/agent_token_manager/FUTURE.md)**: TimescaleDB, Distributed Redis Lock, and Remote Buffer scaling roadmaps.
+s scaling roadmaps.
