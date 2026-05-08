@@ -1,3 +1,5 @@
+![Interactive Theme Toggling Demo](docs/dashboard_demo.webp)
+
 # Agent Token Manager (`agent-atm`)
 
 [![PyPI Version](https://img.shields.io/badge/pypi-0.1.0-blue.svg)](https://pypi.org/project/agent-atm/)
@@ -5,13 +7,24 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-24%20passed-brightgreen.svg)](tests/)
 
-`agent-atm` is a lightweight, premium, **privacy-first** Python SDK designed to observe, measure, and cap LLM token consumption natively inside application workflows. 
+`agent-atm` is a lightweight, **privacy-first** Python SDK designed to observe, measure, and cap LLM token consumption natively within your application workflows.
 
-Actively built for developers, it integrates natively with standard LLM providers (such as Google Gemini and Gemma models) to record precise token metrics, manage nested metadata scopes, and enforce strict daily/hourly/minute token budgets.
+Built as a premium control and monitoring utility for agentic systems, it plugs seamlessly into any model or agent framework to **record precise token metrics**, manage nested metadata scopes, and **enforce strict daily, hourly, or minute-level budgets**.
 
 ---
 
-## 🎯 Alignment: What to Expect & What NOT to Expect
+## ✨ Key Features
+
+* **Plug-and-Play Logging**: Simple, intuitive API styled like Python's standard logging library. Get up and running with standard token tracking in minutes.
+* **Extensible Architecture**: Designed with clean abstractions (interfaces for data managers, tokenizers) that make it trivial to integrate custom models, databases, or tokenizers.
+* **Absolute Privacy Guarantee**: **Zero prompt or response persistence**. Input text is processed strictly in-memory to compute token counts and is instantly discarded.
+* **Flexible Storage Engines**: Shipped with a built-in `InMemoryManager` for testing and a robust `SqliteManager` for single-node deployments, easily extendable to any database.
+* **HTTP REST Daemon**: Built-in FastAPI server acting as a centralized collector to receive telemetry updates asynchronously from remote SDK instances.
+* **Real-Time Dashboard**: Premium dark-mode web UI to visualize token consumption trends, trace nested context scopes, and monitor live budget allocations.
+
+---
+
+## 🎯 Intent: What to Expect & What NOT to Expect
 
 To help you get started quickly and correctly, here is a clear overview of what `agent-atm` is and isn't designed to do:
 
@@ -63,6 +76,8 @@ graph TD
 
 ### 🔒 Privacy-First Guarantee
 To ensure absolute user data protection, `agent-atm` **never stores raw prompt or response text** in its Data Managers. Inputs passed into the logging APIs are processed strictly in-memory to compute token counts and are then immediately discarded. The storage manager only persists numerical token counts, timestamps, model IDs, and user-scoped metadata.
+
+For more information check, [docs/privacy_guarantee.md](docs/privacy_guarantee.md).
 
 ---
 

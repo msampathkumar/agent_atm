@@ -4,7 +4,6 @@ This example showcases how to import the Gemma3Tokenizer using agent-atm's nativ
 register it globally in the SDK, and auto-extract token counts for logged prompt strings.
 """
 
-import sys
 import agent_atm as atm
 
 def run_example():

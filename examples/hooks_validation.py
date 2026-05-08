@@ -4,7 +4,6 @@ This example showcases how to register and execute Pre-Hooks (for blocking valid
 or metadata mutations) and Post-Hooks (for non-blocking reporting or Slack alerting).
 """
 
-import sys
 import agent_atm as atm
 
 def run_example():
