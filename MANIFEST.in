@@ -1,1 +1,1 @@
-recursive-include agent_atm/dashboard/static *
+recursive-include src/agent_atm/dashboard/static *

@@ -23,22 +23,24 @@ install:
 
 test:
 	@echo "--> Running unit tests..."
-	uv run pytest
+	PYTHONPATH=src uv run pytest
 
 run-demo:
 	@echo "--> Running SDK demonstration..."
-	uv run python main.py
+	PYTHONPATH=src uv run python main.py
+
 
 run-examples:
 	@echo "--> Running examples..."
-	PYTHONPATH=. uv run python examples/context_scoping.py
-	PYTHONPATH=. uv run python examples/gemma_tokenizer.py
-	PYTHONPATH=. uv run python examples/hooks_validation.py
-	PYTHONPATH=. uv run python examples/quota_enforcement.py
+	PYTHONPATH=src uv run python examples/context_scoping.py
+	PYTHONPATH=src uv run python examples/gemma_tokenizer.py
+	PYTHONPATH=src uv run python examples/hooks_validation.py
+	PYTHONPATH=src uv run python examples/quota_enforcement.py
 
 run-dashboard:
 	@echo "--> Launching analytics dashboard on http://127.0.0.1:8000..."
-	ATM_DB_PATH=usage.db uv run uvicorn agent_atm.dashboard.server:app --reload --host 127.0.0.1 --port 8000
+	PYTHONPATH=src ATM_DB_PATH=usage.db uv run uvicorn agent_atm.dashboard.server:app --reload --host 127.0.0.1 --port 8000
+
 
 build:
 	@echo "--> Packaging python library..."
