@@ -1,4 +1,4 @@
-.PHONY: help install test run-demo run-examples run-dashboard clean
+.PHONY: help install test run-demo run-examples run-dashboard build publish clean
 
 # Default target when typing just 'make'
 help:
@@ -11,8 +11,11 @@ help:
 	@echo "  run-demo       - Run the primary SDK features demonstration script"
 	@echo "  run-examples   - Run all workflow files inside the examples/ folder"
 	@echo "  run-dashboard  - Spin up the visual FastAPI telemetry metrics dashboard"
+	@echo "  build          - Package the python library (creates sdist and wheel)"
+	@echo "  publish        - Publish the packaged library to PyPI"
 	@echo "  clean          - Clean all python cache folders and local test DB files"
 	@echo "======================================================================"
+
 
 install:
 	@echo "--> Syncing virtual environment and dependencies..."
@@ -37,9 +40,17 @@ run-dashboard:
 	@echo "--> Launching analytics dashboard on http://127.0.0.1:8000..."
 	ATM_DB_PATH=usage.db uv run uvicorn agent_atm.dashboard.server:app --reload --host 127.0.0.1 --port 8000
 
+build:
+	@echo "--> Packaging python library..."
+	uv build
+
+publish:
+	@echo "--> Publishing library to PyPI..."
+	uv publish
+
 clean:
 	@echo "--> Cleaning python cache folders and database files..."
-	rm -rf .pytest_cache .ruff_cache
+	rm -rf .pytest_cache .ruff_cache dist/
 	find . -type d -name "__pycache__" -exec rm -r {} +
 	rm -f usage.db agent_atm.db
 	@echo "Cleanup complete."

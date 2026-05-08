@@ -1,6 +1,6 @@
 [project]
 name = "agent-atm"
-version = "0.1.0"
+version = "0.1.1"
 description = "Agent Token Manager (agent-atm) - A lightweight, privacy-first LLM token usage metering & quota capping SDK."
 readme = "README.md"
 requires-python = ">=3.13"
