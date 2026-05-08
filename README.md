@@ -225,5 +225,7 @@ Open your web browser to **`http://127.0.0.1:8000`** to watch the visual metrics
 
 ## 📖 Additional Guides
 
-* **[GEMINI.md](GEMINI.md)**: Google Gemini & Gemma Tokenizer Developer Integration Guide.
+* **[docs/GEMINI.md](docs/GEMINI.md)**: Google Gemini & Gemma Tokenizer Developer Integration Guide.
+* **[docs/atm_webserver.md](docs/atm_webserver.md)**: Telemetry Webserver Daemon Setup & curl API testing instructions.
+* **[docs/privacy_guarantee.md](docs/privacy_guarantee.md)**: In-depth code verification of the SDK's absolute Privacy Guarantee.
 * **[CONTRIBUTING.md](CONTRIBUTING.md)**: Development Setup, Contribution Guidelines, and Testing Suite Instructions.
