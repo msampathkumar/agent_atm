@@ -1,5 +1,5 @@
 import agent_atm as atm
-from agent_atm.tokenizers.base import LLMPayload
+from agent_atm import LLMPayload
 
 def run_demo():
     print("\n=== 1. Initializing agent-atm ===")

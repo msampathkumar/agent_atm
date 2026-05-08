@@ -116,7 +116,7 @@ def test_gemma_tokenizer_integration_token_arrays():
     assert ev_array.token_count == 4
 
 def test_llm_payload_dataclass_support():
-    from agent_atm.tokenizers.base import LLMPayload
+    from agent_atm import LLMPayload
     
     atm_mgr = AgentTokenManager(data_manager="in_memory")
     

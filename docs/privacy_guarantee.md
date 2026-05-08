@@ -20,7 +20,9 @@ When you log an event via `add_user_request` or `add_model_response`, the raw co
       content: Any  # Raw string, Google GenAI Response, Gemma token arrays, etc.
       model_id: str = "default"
       token_count_override: Optional[int] = None
-      ...
+      event_type: Literal["request", "response"] = "request"
+      _additional_metadata_tags: List[str] = field(default_factory=list)
+      _additional_metadata_config: Dict[str, str] = field(default_factory=dict)
   ```
 The payload holds the text content temporarily while passing it into active tokenizer integrations to compute the exact integer token count.
 
@@ -51,7 +53,7 @@ The compiled [TokenEvent](file:///Users/sampathm/github/agent_token_manager/agen
 @dataclass
 class TokenEvent:
     timestamp: datetime
-    event_type: str  # "request" or "response"
+    event_type: Literal["request", "response"]  # "request" or "response"
     token_count: int
     model_id: str
     username: Optional[str] = None

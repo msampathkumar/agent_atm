@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -23,7 +23,7 @@ DB_PATH = os.environ.get("ATM_DB_PATH", "agent_atm.db")
 db_manager = SqliteManager(db_path=DB_PATH)
 
 class EventPostSchema(BaseModel):
-    event_type: str = Field(..., description="Event type: must be 'request' or 'response'")
+    event_type: Literal["request", "response"] = Field(..., description="Event type: must be 'request' or 'response'")
     token_count: int = Field(..., ge=0, description="Calculated token count")
     model_id: str = Field(..., description="ID of the LLM model used")
     username: Optional[str] = None

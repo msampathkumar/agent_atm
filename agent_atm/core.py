@@ -2,7 +2,7 @@ import atexit
 from datetime import datetime
 import queue
 import threading
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from agent_atm.context import get_current_context
 from agent_atm.data_managers.base import BaseDataManager
@@ -97,7 +97,7 @@ class AgentTokenManager:
 
     def _process_event(
         self, 
-        event_type: str, 
+        event_type: Literal["request", "response"], 
         content: Any = None, 
         token_count: Optional[int] = None,
         model_id: str = "default",

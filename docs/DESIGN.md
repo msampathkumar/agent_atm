@@ -119,15 +119,20 @@ with atm.context(app_id="finance-bot", session_id="session-abc-123", username="b
 Every record is structured into a unified model:
 
 ```python
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Literal, Optional
 
 @dataclass
 class TokenEvent:
+    """Core immutable telemetry record representing a captured token consumption event.
+    
+    Validated on creation via __post_init__ to ensure event_type is either
+    "request" or "response" (throws ValueError otherwise).
+    """
     # Essentials
     timestamp: datetime
-    event_type: str  # "request" or "response"
+    event_type: Literal["request", "response"]  # "request" or "response"
     token_count: int
     model_id: str
     
@@ -141,6 +146,9 @@ class TokenEvent:
     _additional_metadata_tags: List[str] = field(default_factory=list)
     _additional_metadata_config: Dict[str, str] = field(default_factory=dict)
 
+    def __post_init__(self):
+        if self.event_type not in ("request", "response"):
+            raise ValueError(f"Invalid event_type: '{self.event_type}'")
 ```
 
 ### 3.1. Base Class (`BaseDataManager`)
@@ -221,19 +229,32 @@ To achieve auto-token counting, `agent-atm` defines custom tokenizer mappings.
 Instead of passing raw, anonymous `Any` objects to tokenizers, `agent-atm` passes a structured, explicit **`LLMPayload`** dataclass.
 
 ```python
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Literal, Optional
+
 @dataclass
 class LLMPayload:
+    """Structured parameter wrapper passed to all Tokenizer Integrations.
+    
+    Validated on creation to ensure event_type is either 'request' or 'response'.
+    Acts as the initial vehicle carrying content and parameters before conversion 
+    to a final database-storable TokenEvent.
+    """
     # Essentials
     content: Any  # Raw string, Google GenAI Response, Gemma token arrays, etc.
     
     # Optionals
     model_id: str = "default"
     token_count_override: Optional[int] = None
-    event_type: str = "request"
+    event_type: Literal["request", "response"] = "request"
     
     # Standardized Metadata
     _additional_metadata_tags: List[str] = field(default_factory=list)
     _additional_metadata_config: Dict[str, str] = field(default_factory=dict)
+
+    def __post_init__(self):
+        if self.event_type not in ("request", "response"):
+            raise ValueError(f"Invalid event_type: '{self.event_type}'")
 ```
 
 All integrations inherit from the structured base class:

@@ -63,7 +63,7 @@ from agent_atm.types import LLMPayload
 payload = LLMPayload(
     token_count_override=45,
     model_id="example-model",
-    event_type="request" # or "response"
+    event_type="request",  # or "response"
     _additional_metadata_tags=["dev-test"],
     _additional_metadata_config={"node_id": "emea-east-1"}
 )

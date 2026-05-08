@@ -21,10 +21,13 @@ agent_atm/
 └── dashboard/          # FastAPI metrics endpoints and premium Dark Mode HTML dashboard
 ```
 
-### Core Principle: import from `agent_atm.types`
+### Core Principle: Consistent Type Management
+
 To maintain absolute baseline consistency, **no module should define local data structures**. All dataclasses must reside in `agent_atm/types` and be imported from it.
 
----
+For convenience and clean external API interfaces, these types are exposed directly at the package root (`agent_atm`). Client applications or integrations can import types via either:
+- `from agent_atm import LLMPayload, TokenEvent`
+- `from agent_atm.types import LLMPayload, TokenEvent`
 
 ## 🛠️ Local Development Setup
 
@@ -68,21 +71,26 @@ We recommend using **`uv`** for instant, zero-configuration virtualenv and packa
 
 ## 🧪 Running Automated Tests
 
-We maintain a comprehensive unit testing suite under `tests/`. 
+We maintain a comprehensive unit testing suite under `tests/`. The easiest way to manage and run tests is using the provided `Makefile`:
 
 ### Running all tests:
 ```bash
-pytest tests/
+make test
 ```
 
-### Exclude/Include specific suites:
+### Running examples validation:
+```bash
+make run-examples
+```
+
+### Custom pytest selections:
 * To run only core SDK tests:
   ```bash
-  pytest tests/test_core.py
+  uv run pytest tests/test_core.py
   ```
-* To run only examples/recipes validation:
+* To run a specific file or folder:
   ```bash
-  pytest tests/test_examples.py
+  uv run pytest tests/test_types.py
   ```
 
 ---
