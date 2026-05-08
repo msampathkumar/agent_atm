@@ -224,3 +224,22 @@ def dashboard_index():
     with open(index_path, "r", encoding="utf-8") as f:
         return f.read()
 
+
+def run_dashboard():
+    import uvicorn
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Launch the Agent Token Manager analytics dashboard.")
+    parser.add_argument("--host", default="127.0.0.1", help="Host to bind the server to (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind the server to (default: 8000)")
+    parser.add_argument("--db-path", default="agent_atm.db", help="Path to the SQLite telemetry database (default: agent_atm.db)")
+    parser.add_argument("--reload", action="store_true", help="Enable auto-reload (development mode)")
+    args = parser.parse_args()
+
+    os.environ["ATM_DB_PATH"] = args.db_path
+
+    print(f"--> Starting Agent Token Manager dashboard on http://{args.host}:{args.port}")
+    print(f"--> Telemetry Database: {args.db_path}")
+    uvicorn.run("agent_atm.dashboard.server:app", host=args.host, port=args.port, reload=args.reload)
+
+

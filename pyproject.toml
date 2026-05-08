@@ -11,9 +11,16 @@ dependencies = [
     "gemma>=3.3.0"
 ]
 
+[project.scripts]
+agent_atm = "agent_atm.dashboard.server:run_dashboard"
+
+
 [build-system]
 requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]

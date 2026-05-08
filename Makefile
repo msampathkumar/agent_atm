@@ -39,7 +39,8 @@ run-examples:
 
 run-dashboard:
 	@echo "--> Launching analytics dashboard on http://127.0.0.1:8000..."
-	PYTHONPATH=src ATM_DB_PATH=usage.db uv run uvicorn agent_atm.dashboard.server:app --reload --host 127.0.0.1 --port 8000
+	PYTHONPATH=src uv run agent_atm --db-path usage.db --reload
+
 
 
 build:

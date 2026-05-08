@@ -29,9 +29,17 @@ Designed as a high-performance observability and control utility for agentic sys
 Get up and running in less than 60 seconds using either the local SDK or a centralized standalone telemetry server.
 
 ### 1. Installation
+
+Install from PyPI:
 ```bash
 pip install agent-atm
 ```
+
+Or install directly from GitHub:
+```bash
+pip install git+https://github.com/msampathkumar/agent_atm.git
+```
+
 
 ---
 
@@ -122,7 +130,8 @@ Perfect for enterprise microservice environments. Run the `agent-atm` server sta
 
 #### Launch the Standalone Telemetry Daemon:
 ```bash
-ATM_DB_PATH=agent_atm.db uvicorn agent_atm.dashboard.server:app --host 127.0.0.1 --port 8000
+agent_atm --db-path agent_atm.db --host 127.0.0.1 --port 8000
+
 ```
 
 #### Push Telemetry via curl (fully independent of Python/SDK):
@@ -217,7 +226,8 @@ def slack_alert(event):
 Start the telemetry metrics daemon to view real-time consumption trend lines, aggregate app metrics, top-consuming users, and live event telemetry logs inside a premium visual dashboard:
 
 ```bash
-ATM_DB_PATH=agent_atm.db uvicorn agent_atm.dashboard.server:app --reload --host 127.0.0.1 --port 8000
+agent_atm --db-path agent_atm.db --host 127.0.0.1 --port 8000
+
 ```
 
 Open your web browser to **`http://127.0.0.1:8000`** to access the visual console.
