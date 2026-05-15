@@ -6,8 +6,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from agent_atm.types import TokenEvent
-from agent_atm.data_managers.sqlite import SqliteManager
-
+from agent_atm.data_managers.sqlalchemy import SQLAlchemyManager
+from agent_atm.rules.engine import RuleEngine
+from agent_atm.rules.exceptions import DBRuleTokenAllowanceExceeded, CustomServerPyRuleViolation
 
 app = FastAPI(
     title="Agent Token Manager Dashboard",
@@ -22,7 +23,26 @@ if os.path.exists(static_dir):
 
 # Resolve database path from environment or default
 DB_PATH = os.environ.get("ATM_DB_PATH", "agent_atm.db")
-db_manager = SqliteManager(db_path=DB_PATH)
+db_manager = SQLAlchemyManager(db_url=DB_PATH)
+
+# Load Rule Engine and dynamic server-side rules
+rule_engine = RuleEngine()
+# DEPRECATED in v1.0: Dynamic server-side rules.py auto-import has been disabled.
+# Rationale: Magic auto-imports violate explicit design principles and introduce security risks.
+# Developers should explicitly register server rules via rule_engine.add_server_rule().
+# server_rules_path = os.path.join(os.getcwd(), "rules.py")
+# if os.path.exists(server_rules_path):
+#     try:
+#         import importlib.util
+#         spec = importlib.util.spec_from_file_location("server_rules", server_rules_path)
+#         if spec and spec.loader:
+#             module = importlib.util.module_from_spec(spec)
+#             spec.loader.exec_module(module)
+#             if hasattr(module, "validate_request"):
+#                 rule_engine.add_server_rule(getattr(module, "validate_request"))
+#     except Exception as e:
+#         print(f"[agent-atm-server] Warning: Failed to dynamically load server rules.py: {e}")
+
 
 
 class EventPostSchema(BaseModel):
@@ -42,6 +62,39 @@ class EventPostSchema(BaseModel):
 def health_check():
     """Health check endpoint for monitoring."""
     return {"status": "healthy", "database": "connected"}
+
+
+@app.post("/api/validate", status_code=200)
+def validate_event(payload: EventPostSchema):
+    """Endpoint to validate token usage limits against server rules and DB quotas."""
+    event = TokenEvent(
+        timestamp=datetime.now(),
+        event_type=payload.event_type,
+        token_count=payload.token_count,
+        model_id=payload.model_id,
+        username=payload.username,
+        session_id=payload.session_id,
+        app_id=payload.app_id,
+        _additional_metadata_tags=payload.tags or [],
+        _additional_metadata_config=payload.config or {},
+    )
+
+    # Evaluate server dynamic validation rules and DB validation rules
+    try:
+        rule_engine.validate_server_rules(event)
+        rule_engine.validate_db_rules(event, db_manager)
+    except CustomServerPyRuleViolation as e:
+        raise HTTPException(status_code=400, detail=f"CUSTOM-SERVER-PY-RULE: {str(e)}")
+    except DBRuleTokenAllowanceExceeded as e:
+        raise HTTPException(status_code=402, detail=f"DB-RULE-TOKEN-ALLOWANCE: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {
+        "status": "allowed",
+        "message": "Validation checks passed successfully."
+    }
+
 
 
 @app.post("/api/events", status_code=201)

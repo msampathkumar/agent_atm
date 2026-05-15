@@ -20,6 +20,9 @@ def init(
     db_path: str = "agent_atm.db",
     default_app_id: Optional[str] = None,
     tokenizer: Optional[Any] = None,
+    telemetry_failure_policy: str = "fail",
+    quota_cache: Optional[str] = None,
+    **kwargs
 ) -> AgentTokenManager:
     """Initialize the global singleton instance of AgentTokenManager.
 
@@ -34,6 +37,9 @@ def init(
         db_path=db_path,
         default_app_id=default_app_id,
         tokenizer=tokenizer,
+        telemetry_failure_policy=telemetry_failure_policy,
+        quota_cache=quota_cache,
+        **kwargs
     )
     return _global_manager
 
@@ -88,6 +94,16 @@ class LimitsProxy:
 limits = LimitsProxy()
 
 
+# Expose validation rules proxies
+class RulesProxy:
+    def add_app_rule(self, func) -> None:
+        """Register a custom application-level local python rule callback."""
+        _get_manager().rule_engine.add_app_rule(func)
+
+
+custom_rules = RulesProxy()
+
+
 # Expose hooks registration proxies
 def hook(hook_type: str):
     """Decorator to register a validation or callback hook on the global manager.
@@ -126,6 +142,7 @@ __all__ = [
     "AlertLevel",
     "TokenQuotaExceeded",
     "limits",
+    "custom_rules",
     "hook",
     "add_hook",
     "shutdown",

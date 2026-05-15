@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
-from agent_atm.context import TokenEvent
+from agent_atm.types import TokenEvent
 
 class BaseDataManager(ABC):
     @abstractmethod

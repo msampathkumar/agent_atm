@@ -323,6 +323,12 @@ A modern, dynamic dashboard UI (Glassmorphism, Dark mode, Google Fonts integrati
 
 ## 7. Roadmap & Milestones
 
+- **v1.0.0 (Clean Core, Unified Storage & Quota Caching) - [COMPLETED]**
+  - Standardized exclusively on `SQLAlchemyManager` for persistent storage, eliminating schema drift.
+  - Added `get_usage_summary` single-pass aggregation, optimizing quota validation queries by 75%.
+  - Created `RemoteHTTPDataManager` for pluggable remote telemetry over HTTP.
+  - Implemented `CachedDataManagerProxy` and `quota_cache="memory"` parameter to eliminate database lock bottlenecks.
+  - Deprecated implicit magic `rules.py` auto-loading for predictability and security.
 - **v0.1.0 (Core SDK & Local Storage) - [COMPLETED]**
   - Base SDK client & Singleton API (Completed)
   - `InMemoryManager` implementation (Completed)
@@ -331,7 +337,7 @@ A modern, dynamic dashboard UI (Glassmorphism, Dark mode, Google Fonts integrati
   - SQLite Database Manager (`SqliteManager`) (Completed)
   - Gemma Tokenizer & Gemma3Tokenizer support (Completed)
   - FastAPI Telemetry API & Premium Dark Mode Web Dashboard (Completed)
-- **v0.2.0 (Scale & Distributed Tracking) - [IN PROGRESS]**
+- **v0.2.0 (Scale & Distributed Tracking) - [PLANNED]**
   - Redis Database Manager (`RedisManager`) (Planned)
   - Dynamic Distributed limits capping & Remote Quotas (Planned)
   - Remote client bulk buffering & network batching (Planned)

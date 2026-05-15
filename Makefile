@@ -36,6 +36,7 @@ run-examples:
 	PYTHONPATH=src uv run python examples/gemma_tokenizer.py
 	PYTHONPATH=src uv run python examples/hooks_validation.py
 	PYTHONPATH=src uv run python examples/quota_enforcement.py
+	PYTHONPATH=src uv run python examples/rules_example.py
 
 run-dashboard:
 	@echo "--> Launching analytics dashboard on http://127.0.0.1:8000..."

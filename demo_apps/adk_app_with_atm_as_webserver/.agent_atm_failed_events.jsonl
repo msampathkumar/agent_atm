@@ -1,0 +1,2 @@
+{"timestamp": "2026-05-16T00:33:38.619985", "event_type": "request", "token_count": 25, "model_id": "gemini-2.5-flash", "username": "remote_user", "session_id": "sess_remote_202", "app_id": "adk-remote-bot", "hostname": "sampathm-mac.roam.internal", "tags": [], "config": {}}
+{"timestamp": "2026-05-16T00:33:38.632856", "event_type": "response", "token_count": 80, "model_id": "gemini-2.5-flash", "username": "remote_user", "session_id": "sess_remote_202", "app_id": "adk-remote-bot", "hostname": "sampathm-mac.roam.internal", "tags": [], "config": {}}

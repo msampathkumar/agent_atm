@@ -40,7 +40,7 @@ def test_limits_blocking_quota():
     with pytest.raises(TokenQuotaExceeded, match="Total limit of 1000 tokens exceeded"):
         registry.validate(ev_breach, mgr)
 
-def test_limits_warning_quota(capsys):
+def test_limits_warning_quota(caplog):
     mgr = InMemoryManager()
     registry = LimitRegistry()
     
@@ -70,8 +70,7 @@ def test_limits_warning_quota(capsys):
     
     # Validate should not raise, but write warning log
     registry.validate(ev_breach, mgr)
-    captured = capsys.readouterr()
-    assert "WARNING: [agent-atm] Quota Breach: Daily limit of 500 tokens exceeded" in captured.err
+    assert "[agent-atm] Quota Breach: Daily limit of 500 tokens exceeded" in caplog.text
 
 def test_limits_minute_quota():
     mgr = InMemoryManager()
@@ -135,3 +134,38 @@ def test_scope_matching():
     # Wildcard match
     wild_scope = Scope(app="*", user="Joe")
     assert wild_scope.matches(TokenEvent(datetime.now(), "request", 10, "model", "Joe", "sess", "other-app")) is True
+
+
+def test_minute_rule_exact_user_scenario():
+    """Test 1-minute rule for 100 tokens: 50 tokens pass, 150 tokens fail."""
+    mgr = InMemoryManager()
+    registry = LimitRegistry()
+
+    registry.add(
+        scope=Scope(app="*"),
+        quota=Quota(minute_limit=100),
+        alert_level=AlertLevel.BLOCKING
+    )
+
+    now = datetime.now()
+
+    # 1. Check for 50 tokens for pass test
+    ev_pass = TokenEvent(
+        timestamp=now,
+        event_type="request",
+        token_count=50,
+        model_id="test"
+    )
+    registry.validate(ev_pass, mgr)
+    mgr.save(ev_pass)
+
+    # 2. Check for 150 tokens for fail test
+    ev_fail = TokenEvent(
+        timestamp=now,
+        event_type="request",
+        token_count=150,
+        model_id="test"
+    )
+    with pytest.raises(TokenQuotaExceeded, match="Per-minute limit of 100 tokens exceeded"):
+        registry.validate(ev_fail, mgr)
+

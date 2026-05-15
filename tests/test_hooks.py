@@ -53,7 +53,7 @@ def test_blocking_pre_hook():
     with pytest.raises(ValueError, match="Blocked by pre-hook validation"):
         registry.trigger_pre_hooks(ev)
 
-def test_non_blocking_post_hook(capsys):
+def test_non_blocking_post_hook(caplog):
     registry = HookRegistry()
     
     @registry.register("post")
@@ -69,5 +69,4 @@ def test_non_blocking_post_hook(capsys):
     
     # Triggering post-hook should capture exception and print error, not raise
     registry.trigger_post_hooks(ev)
-    captured = capsys.readouterr()
-    assert "Error running post-hook" in captured.err
+    assert "Error running post-hook" in caplog.text

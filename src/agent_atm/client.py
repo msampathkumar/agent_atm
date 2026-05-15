@@ -185,3 +185,39 @@ class Client:
             tags=tags,
             config=config,
         )
+
+
+from datetime import datetime
+from agent_atm.data_managers.base import BaseDataManager
+from agent_atm.types import TokenEvent
+
+
+class RemoteHTTPDataManager(BaseDataManager):
+    """Data Manager that sends telemetry events to a remote ATM server via HTTP."""
+
+    def __init__(self, base_url: str = "http://127.0.0.1:8000"):
+        self.client = Client(base_url=base_url)
+
+    def save(self, event: TokenEvent) -> None:
+        self.client.send_event(
+            event_type=event.event_type,
+            token_count=event.token_count,
+            model_id=event.model_id,
+            username=event.username,
+            session_id=event.session_id,
+            app_id=event.app_id,
+            tags=event._additional_metadata_tags,
+            config=event._additional_metadata_config,
+        )
+
+    def get_usage(
+        self,
+        app_id: Optional[str] = None,
+        username: Optional[str] = None,
+        session_id: Optional[str] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> int:
+        # Remote usage queries are not supported by default
+        return 0
+

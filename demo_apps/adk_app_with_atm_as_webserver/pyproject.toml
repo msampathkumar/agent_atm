@@ -1,0 +1,14 @@
+[project]
+name = "adk-app-with-atm-as-webserver"
+version = "0.1.0"
+description = "ADK App with ATM as Webserver Telemetry"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "agent-atm",
+    "google-adk>=1.33.0",
+    "pytest"
+]
+
+[tool.uv.sources]
+agent-atm = { path = "./agent_atm-1.0.0-py3-none-any.whl" }

@@ -9,6 +9,11 @@ from agent_atm.tokenizers.base import BaseTokenizerIntegration, LLMPayload
 
 # Dynamic sys.modules import alias for gemma.text -> gemma.gm.text
 try:
+    from unittest.mock import MagicMock
+    if "kauldron.utils" not in sys.modules:
+        sys.modules["kauldron.utils"] = MagicMock()
+    if "kauldron" not in sys.modules:
+        sys.modules["kauldron"] = MagicMock()
     from gemma import gm
     sys.modules["gemma.text"] = gm.text
 except ImportError:

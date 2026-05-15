@@ -1,8 +1,8 @@
-![Interactive Theme Toggling Demo](docs/dashboard_demo.webp)
+![Interactive Theme Toggling Demo](docs/dashboard_preview.png)
 
 # Agent Token Manager (`agent-atm`)
 
-[![PyPI Version](https://img.shields.io/badge/pypi-0.1.0-blue.svg)](https://pypi.org/project/agent-atm/)
+[![PyPI Version](https://img.shields.io/badge/pypi-1.0.0-blue.svg)](https://pypi.org/project/agent-atm/)
 [![Python Versions](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://pyproject.toml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-24%20passed-brightgreen.svg)](tests/)
@@ -18,7 +18,7 @@ Designed as a high-performance observability and control utility for agentic sys
 * **Plug-and-Play Observability**: An intuitive API designed to feel as familiar as Python's standard logging library.
 * **Extensible Interface Architecture**: Built on clean, developer-friendly abstractions (interfaces for storage managers and tokenizers), making custom integrations simple.
 * **Privacy-First Guarantee**: **Zero raw prompt or response text storage**. All incoming text is parsed strictly in-memory to calculate token metrics and instantly discarded.
-* **Flexible Storage Managers**: Shipped with a thread-safe `InMemoryManager` for rapid local testing and a robust `SqliteManager` for persistent single-node deployments.
+* **Flexible Storage Managers**: Shipped with a thread-safe `InMemoryManager`, a robust `SQLAlchemyManager` for persistent local deployments, and a `RemoteHTTPDataManager` for distributed telemetry.
 * **Centralized Telemetry Daemon**: A built-in FastAPI server serving as a centralized collector to asynchronously gather token events from distributed client instances.
 * **Premium Visual Analytics**: A modern, interactive dark-mode dashboard to view token trends, audit active configurations, and track live budget allocations.
 
@@ -49,8 +49,8 @@ Perfect for Python applications running in-process. Initialize the SQLite storag
 ```python
 import agent_atm as atm
 
-# Initialize local SQLite persistent database
-atm.init(data_manager="sqlite", db_path="agent_atm.db", default_app_id="customer-bot")
+# Initialize local persistent database with in-memory quota caching
+atm.init(data_manager="sqlite", db_path="agent_atm.db", default_app_id="customer-bot", quota_cache="memory")
 
 # Record a request event with token count and tags
 atm.add_user_request(token_count=32, _additional_metadata_tags=["user-prompt"])
@@ -130,7 +130,7 @@ Perfect for enterprise microservice environments. Run the `agent-atm` server sta
 
 #### Launch the Standalone Telemetry Daemon:
 ```bash
-agent_atm --db-path agent_atm.db --host 127.0.0.1 --port 8000
+uv run agent_atm --db-path agent_atm.db --host 127.0.0.1 --port 8000
 
 ```
 
@@ -226,7 +226,7 @@ def slack_alert(event):
 Start the telemetry metrics daemon to view real-time consumption trend lines, aggregate app metrics, top-consuming users, and live event telemetry logs inside a premium visual dashboard:
 
 ```bash
-agent_atm --db-path agent_atm.db --host 127.0.0.1 --port 8000
+uv run agent_atm --db-path agent_atm.db --host 127.0.0.1 --port 8000
 
 ```
 
@@ -239,4 +239,3 @@ Open your web browser to **`http://127.0.0.1:8000`** to access the visual consol
 * **[GEMINI.md](file:///Users/sampathm/github/agent_token_manager/GEMINI.md)**: Native Gemini & Gemma Tokenizer Integration Handbook.
 * **[CONTRIBUTING.md](file:///Users/sampathm/github/agent_token_manager/CONTRIBUTING.md)**: Contribution Rules, Virtual Env Setup, and Automated Testing Suite Guide.
 * **[FUTURE.md](file:///Users/sampathm/github/agent_token_manager/FUTURE.md)**: TimescaleDB, Distributed Redis Lock, and Remote Buffer scaling roadmaps.
-s scaling roadmaps.

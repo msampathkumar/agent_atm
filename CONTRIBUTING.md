@@ -14,7 +14,7 @@ agent_atm/
 │   ├── event.py        # TokenEvent structure definition
 │   ├── payload.py      # LLMPayload input wrapper definition
 │   └── limit.py        # Scope, Quota, LimitRule, AlertLevel definitions
-├── data_managers/      # Storage engines (InMemory, SQLite, future Redis)
+├── data_managers/      # Storage engines (InMemory, SQLAlchemy, Remote, future Redis)
 ├── hooks/              # Custom validator Pre and Post registries
 ├── limits/             # Token quota matches & limit evaluation engines
 ├── tokenizers/         # Standard (Tiktoken) & native SDK (Google GenAI, Gemma) tokenizers

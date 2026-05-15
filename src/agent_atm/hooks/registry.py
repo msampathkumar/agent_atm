@@ -7,6 +7,9 @@ from typing import Callable, List
 import sys
 from agent_atm.types import TokenEvent
 
+import logging
+logger = logging.getLogger("agent_atm")
+
 class HookRegistry:
     """Manages custom Pre-Hooks and Post-Hooks execution list."""
     
@@ -17,6 +20,7 @@ class HookRegistry:
     def register(self, hook_type: str) -> Callable[[Callable[[TokenEvent], None]], Callable[[TokenEvent], None]]:
         """Decorator interface to register a hook."""
         def decorator(func: Callable[[TokenEvent], None]) -> Callable[[TokenEvent], None]:
+            logger.info(f"Registering {hook_type}-hook: {func.__name__}")
             if hook_type == "pre":
                 self.pre_hooks.append(func)
             elif hook_type == "post":
@@ -28,6 +32,7 @@ class HookRegistry:
 
     def add_hook(self, func: Callable[[TokenEvent], None], hook_type: str = "pre") -> None:
         """Register a hook function imperatively."""
+        logger.info(f"Registering {hook_type}-hook: {func.__name__}")
         if hook_type == "pre":
             self.pre_hooks.append(func)
         elif hook_type == "post":
@@ -37,13 +42,15 @@ class HookRegistry:
 
     def trigger_pre_hooks(self, event: TokenEvent) -> None:
         """Execute all registered pre-hooks. Any exception raised will abort the write operation."""
+        logger.debug("Executing all registered pre-hooks")
         for hook in self.pre_hooks:
             hook(event)
 
     def trigger_post_hooks(self, event: TokenEvent) -> None:
         """Execute all registered post-hooks in a safe, non-blocking try-except wrapper."""
+        logger.debug("Executing all registered post-hooks")
         for hook in self.post_hooks:
             try:
                 hook(event)
             except Exception as e:
-                print(f"[agent-atm] Error running post-hook: {e}", file=sys.stderr)
+                logger.error(f"[agent-atm] Error running post-hook: {e}")
