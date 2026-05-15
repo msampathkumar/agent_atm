@@ -11,6 +11,11 @@
 
 Designed as a high-performance observability and control utility for agentic systems, it plugs seamlessly into any model or agent framework to **record precise token metrics**, manage nested metadata scopes, and **enforce real-time budget quotas** over daily, hourly, or minute-level windows.
 
+**Disclaimer:**
+1. This is not official Google Cloud product
+2. This is a experimental idea
+3. This is for solving my Token Problem (lack of usage controls)
+
 ---
 
 ## ✨ Key Features
